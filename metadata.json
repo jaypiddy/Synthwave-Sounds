@@ -1,0 +1,7 @@
+{
+  "name": "Synthwave Sounds",
+  "description": "A retro-futuristic music platform featuring a 1980s Cyber-OS aesthetic, draggable windows, and AI-driven synthwave tracks.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
