@@ -39,28 +39,34 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Sync with Firestore
   useEffect(() => {
-    const q = query(collection(db, 'tracks'), orderBy('timestamp', 'desc'));
+    let unsubscribe = () => {};
     
-    // Adding the second argument as an error handler to catch permission-denied errors
-    // Explicitly typing querySnapshot as QuerySnapshot<DocumentData> to ensure correct type inference
-    const unsubscribe = onSnapshot(q, 
-      (querySnapshot: QuerySnapshot<DocumentData>) => {
-        const tracksData: Track[] = [];
-        querySnapshot.forEach((doc) => {
-          tracksData.push({ id: doc.id, ...doc.data() } as Track);
-        });
-        setTracks(tracksData);
-        setDbError(null);
-      },
-      (error) => {
-        console.error("Firestore Snapshot Error:", error);
-        if (error.code === 'permission-denied') {
-          setDbError("ACCESS_DENIED: UPDATE_FIRESTORE_RULES");
-        } else {
-          setDbError(`DB_ERROR: ${error.code.toUpperCase()}`);
+    try {
+      const tracksRef = collection(db, 'tracks');
+      const q = query(tracksRef, orderBy('timestamp', 'desc'));
+      
+      unsubscribe = onSnapshot(q, 
+        (querySnapshot: QuerySnapshot<DocumentData>) => {
+          const tracksData: Track[] = [];
+          querySnapshot.forEach((doc) => {
+            tracksData.push({ id: doc.id, ...doc.data() } as Track);
+          });
+          setTracks(tracksData);
+          setDbError(null);
+        },
+        (error) => {
+          console.error("Firestore Snapshot Error:", error);
+          if (error.code === 'permission-denied') {
+            setDbError("ACCESS_DENIED: MISSING_RULES");
+          } else {
+            setDbError(`DB_ERROR: ${error.code.toUpperCase()}`);
+          }
         }
-      }
-    );
+      );
+    } catch (err: any) {
+      console.error("Setup Error:", err);
+      setDbError("INIT_ERROR: CHECK_CONSOLE");
+    }
 
     return () => unsubscribe();
   }, []);
@@ -76,12 +82,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch(error => {
-          if (error.name === 'AbortError') {
-            return; 
-          } else {
-            console.error('Playback failed:', error);
-            setIsPlaying(false);
-          }
+          if (error.name === 'AbortError') return;
+          console.error('Playback failed:', error);
+          setIsPlaying(false);
         });
       }
     } else {
@@ -106,7 +109,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [currentTrackIndex, tracks]);
+  }, [currentTrackIndex, tracks, isShuffle]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -180,7 +183,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }}>
       {children}
       <audio 
-        key={currentTrack?.audioURL}
+        key={currentTrack?.id || 'idle'}
         ref={audioRef} 
         src={currentTrack?.audioURL} 
         preload="auto"

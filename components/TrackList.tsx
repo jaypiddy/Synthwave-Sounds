@@ -31,7 +31,7 @@ const TrackList: React.FC<TrackListProps> = () => {
             onChange={(e) => setFilter(e.target.value)}
             className="w-full bg-black/50 border border-cyan-500/50 p-2 text-xs focus:border-cyan-400 focus:outline-none placeholder:opacity-30 italic"
           />
-          <div className="absolute right-2 top-2 text-[10px] opacity-30">HEX_SRCH</div>
+          <div className="absolute right-2 top-2 text-[10px] opacity-30 uppercase">HEX_SRCH</div>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -39,7 +39,7 @@ const TrackList: React.FC<TrackListProps> = () => {
             <button 
               key={v}
               onClick={() => setVibe(v)}
-              className={`text-[10px] px-2 py-0.5 border transition-all ${vibe === v ? 'bg-cyan-500 text-black border-cyan-300 shadow-[0_0_8px_#00ffff]' : 'border-cyan-500/30 text-cyan-500 hover:border-cyan-400'}`}
+              className={`text-[10px] px-2 py-0.5 border transition-all ${vibe === v ? 'bg-cyan-500 text-black border-cyan-300 shadow-[0_0_8px_#00ffff]' : 'border-cyan-500/30 text-cyan-500 hover:border-cyan-400 uppercase'}`}
             >
               {v}
             </button>
@@ -55,22 +55,26 @@ const TrackList: React.FC<TrackListProps> = () => {
           <div className="w-20 text-right">VIBE</div>
         </div>
         
-        <div className="max-h-80 overflow-y-auto min-h-[120px] relative">
+        <div className="max-h-80 overflow-y-auto min-h-[140px] relative">
           {dbError ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/90 backdrop-blur-md z-50 overflow-y-auto">
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/95 backdrop-blur-md z-[50] border-2 border-red-500/30">
               <div className="text-red-500 font-black text-xs blink mb-2 uppercase italic tracking-widest">{dbError}</div>
-              <p className="text-[10px] text-red-400/80 text-center mb-4 leading-relaxed">
-                FIRESTORE SECURITY BREACH: Rules must be updated in Firebase Console to allow public READ.
+              <p className="text-[10px] text-red-400/80 text-center mb-4 leading-relaxed uppercase">
+                FIRESTORE SECURITY BREACH: Rules must be updated to allow public READ.
               </p>
-              <div className="w-full bg-black border border-red-500/30 p-2 rounded text-[9px] font-mono text-cyan-400/70 select-all mb-4">
-                <pre className="whitespace-pre-wrap">
-{`match /tracks/{t} {
-  allow read: if true;
-  allow write: if request.auth != null;
+              <div className="w-full bg-black border border-red-500/30 p-2 rounded text-[9px] font-mono text-cyan-400/70 select-all mb-4 overflow-x-auto">
+                <pre className="whitespace-pre">
+{`service cloud.firestore {
+  match /databases/{database}/documents {
+    match /tracks/{track} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
 }`}
                 </pre>
               </div>
-              <p className="text-[9px] text-pink-500 opacity-50 uppercase">Paste in: Firestore > Rules</p>
+              <p className="text-[9px] text-pink-500 opacity-50 uppercase">PASTE THIS INTO: FIRESTORE > RULES</p>
             </div>
           ) : null}
 
